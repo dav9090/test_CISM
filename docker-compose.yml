@@ -1,0 +1,85 @@
+services:
+  db:
+    image: postgres:14
+    restart: always
+    env_file:
+      - .env
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $POSTGRES_USER"]
+      interval: 1s
+      timeout: 1s
+      retries: 5
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - backend
+
+  rabbitmq:
+    image: rabbitmq:3.9-management
+    restart: always
+    env_file:
+      - .env
+    environment:
+      RABBITMQ_DEFAULT_USER: user
+      RABBITMQ_DEFAULT_PASS: password
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      - backend
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: task_api
+    restart: on-failure
+    depends_on:
+      - db
+      - rabbitmq
+    env_file:
+      - .env
+    ports:
+      - "9000:8000"
+    volumes:
+      - ./:/app
+    command: >
+      sh -c "alembic upgrade head &&
+             uvicorn app.main:app --host 0.0.0.0 --port 8000"
+    networks:
+      - backend
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: task_worker
+    restart: on-failure
+    depends_on:
+      - db
+      - rabbitmq
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL
+      - RABBITMQ_URL
+    volumes:
+      - ./:/app
+    command: >
+      sh -c "
+        until nc -z rabbitmq 5672; do
+          echo 'Waiting for RabbitMQ...';
+          sleep 2;
+        done;
+        alembic upgrade head &&
+        python -u -m app.worker
+      "
+    networks:
+      - backend
+
+volumes:
+  postgres_data:
+
+networks:
+  backend:
+    driver: bridge
