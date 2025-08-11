@@ -1,19 +1,31 @@
-import aio_pika
-from aio_pika import ExchangeType, Message, DeliveryMode
-from app.core.config import settings
 from typing import Optional
+
+import aio_pika
+from aio_pika import (
+    DeliveryMode,
+    ExchangeType,
+    Message,
+)
+from aio_pika.abc import (
+    AbstractChannel,
+    AbstractConnection,
+    AbstractExchange,
+    AbstractQueue,
+)
+
+from app.core.config import settings
 
 
 class TaskProcessor:
     _instance: Optional["TaskProcessor"] = None
 
-    def __init__(self):
+    def __init__(self) -> None:
         # Флаг, чтобы инициализация сработала только один раз
         self._initialized = False
-        self.connection = None
-        self.channel = None
-        self.exchange = None
-        self.queue = None
+        self.connection: AbstractConnection | None = None
+        self.channel: AbstractChannel | None = None
+        self.exchange: AbstractExchange | None = None
+        self.queue: AbstractQueue | None = None
 
     async def initialize(self) -> None:
         """Асинхронная инициализация подключения к RabbitMQ."""
@@ -40,6 +52,8 @@ class TaskProcessor:
     async def enqueue(self, task_id: str) -> None:
         """Публикация новой задачи в очередь."""
         await self.initialize()
+        if self.exchange is None:
+            raise RuntimeError("Exchange not initialized")
         msg = Message(
             body=task_id.encode(),
             delivery_mode=DeliveryMode.PERSISTENT,

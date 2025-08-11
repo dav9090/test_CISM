@@ -1,13 +1,11 @@
 import asyncio
 from logging.config import fileConfig
 
+from alembic import context
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
 
-from alembic import context
-
-# импортируем ваш объект settings
 from app.core.config import settings
 from app.db.base import Base  # или откуда берете metadata ваших моделей
 
@@ -25,7 +23,7 @@ fileConfig(str(config.config_file_name))
 target_metadata = Base.metadata
 
 
-def run_migrations_offline():
+def run_migrations_offline() -> None:
     """Запуск миграций в 'offline' режиме."""
     url = settings.DATABASE_URL
     context.configure(
@@ -39,7 +37,7 @@ def run_migrations_offline():
         context.run_migrations()
 
 
-def do_run_migrations(connection: Connection):
+def do_run_migrations(connection: Connection) -> None:
     context.configure(
         connection=connection,
         target_metadata=target_metadata,
@@ -48,7 +46,7 @@ def do_run_migrations(connection: Connection):
         context.run_migrations()
 
 
-async def run_migrations_online():
+async def run_migrations_online() -> None:
     """Запуск миграций в 'online' режиме (асинхронно)."""
     # создаем асинхронный движок на базе нашего URL
     connectable: AsyncEngine = create_async_engine(

@@ -86,6 +86,18 @@
 
 ---
 
+## Архитектура проекта
+
+Проект использует многослойную архитектуру:
+
+- **API Layer** - FastAPI endpoints
+- **Repository Layer** - абстракция работы с базой данных
+- **Service Layer** - бизнес-логика
+- **Model Layer** - SQLAlchemy модели
+- **Schema Layer** - Pydantic схемы для валидации
+
+---
+
 ## Быстрый старт
 
 1. **Клонируйте репозиторий**  
@@ -93,43 +105,32 @@
    git clone https://github.com/your-org/task-service.git
    cd task-service
    
-2. **Файл окружение .env исутствует в проекте в качестве исключения**
+2. **Настройте окружение**
+   ```bash
+   cp env.example .env
+   # Отредактируйте .env файл под ваши нужды
+   ```
 
 3. **Запустить через Docker Compose**
-
-	```bash
-	docker-compose up -d --build  
-	 ```
-	Поднимутся сервисы:
-
-	db (PostgreSQL)
-
-	rabbitmq
-
-	api (FastAPI + Uvicorn)
-	
-	
-4. **Выполнить миграции**
-	Миграции применятся при старте api. Вручную:
-
-	```bash
-	docker-compose run --rm api alembic upgrade head
+   ```bash
+   docker-compose up -d --build  
+   ```
+   Поднимутся сервисы:
+   - db (PostgreSQL) с healthcheck
+   - rabbitmq с healthcheck
+   - api (FastAPI + Uvicorn)
+   - worker (фоновый обработчик)
+   
+4. **Миграции выполнятся автоматически** при старте api и worker сервисов.
 
 5. **Документация**
+   **Внимание порт выбран 9000, а не стандартный 8000!** Т.к. при разработке другие порты были заняты, либо зарезервированны. 
+   
+   Swagger UI: http://localhost:9000/docs
+   ReDoc: http://localhost:9000/redoc
 
-	**Внимание порт выбран 9000, а не стандартный 8000!** Т.к. при разработке другие порты были заняты, либо зарезервированны. 
-	
-	Swagger UI: http://localhost:9000/docs
+---
 
-	ReDoc: http://localhost:9000/redoc
-	
-	
-6. **Запустить фонового воркера**
-
-	```bash
-	docker-compose run --rm api python app/worker.py
-	
-	
 ## Запуск тестов и отчёт по покрытию
 
 **Запустить все тесты:**

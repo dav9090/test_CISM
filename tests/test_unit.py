@@ -1,8 +1,8 @@
 import pytest
 from pydantic import ValidationError
 
-from app.schemas.task import TaskCreate, TaskRead, TaskStatus
 from app.db.models.task import Priority, Status
+from app.schemas.task import TaskCreate, TaskRead, TaskStatus
 from app.services.task_processor import TaskProcessor, get_task_processor
 
 
@@ -16,8 +16,8 @@ def test_task_create_schema_valid():
 
 def test_task_create_schema_missing_fields():
     with pytest.raises(ValidationError):
-        # не хватает description и priority
-        TaskCreate(title="Test")
+        # не хватает title и priority
+        TaskCreate(description="Test")
 
 
 def test_task_read_from_orm():
@@ -30,12 +30,12 @@ def test_task_read_from_orm():
         status = Status.NEW
         created_at = "2025-06-20T10:00:00"
         started_at = None
-        completed_at = None
+        finished_at = None
         result = None
         error = None
 
     dummy = Dummy()
-    task = TaskRead.from_orm(dummy)
+    task = TaskRead.model_validate(dummy)
     assert task.id == "123"
     assert task.status == Status.NEW
     assert task.priority == Priority.LOW

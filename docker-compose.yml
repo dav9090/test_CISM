@@ -5,10 +5,11 @@ services:
     env_file:
       - .env
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U $POSTGRES_USER"]
-      interval: 1s
-      timeout: 1s
+      test: ["CMD-SHELL", "pg_isready -U $POSTGRES_USER -d $POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
       retries: 5
+      start_period: 30s
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:
@@ -22,6 +23,12 @@ services:
     environment:
       RABBITMQ_DEFAULT_USER: user
       RABBITMQ_DEFAULT_PASS: password
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
     ports:
       - "5672:5672"
       - "15672:15672"
@@ -35,8 +42,10 @@ services:
     container_name: task_api
     restart: on-failure
     depends_on:
-      - db
-      - rabbitmq
+      db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     env_file:
       - .env
     ports:
@@ -56,8 +65,10 @@ services:
     container_name: task_worker
     restart: on-failure
     depends_on:
-      - db
-      - rabbitmq
+      db:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     env_file:
       - .env
     environment:
@@ -66,14 +77,8 @@ services:
     volumes:
       - ./:/app
     command: >
-      sh -c "
-        until nc -z rabbitmq 5672; do
-          echo 'Waiting for RabbitMQ...';
-          sleep 2;
-        done;
-        alembic upgrade head &&
-        python -u -m app.worker
-      "
+      sh -c "alembic upgrade head &&
+             python -u -m app.worker"
     networks:
       - backend
 

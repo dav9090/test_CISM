@@ -1,8 +1,9 @@
+import structlog
 import uvicorn
 from fastapi import FastAPI
-import structlog
-from app.core.logging import init_logging
+
 from app.api.v1.endpoints.tasks import router as tasks_router
+from app.core.logging import init_logging
 from app.services.task_processor import get_task_processor
 
 logger = structlog.get_logger()
@@ -21,7 +22,7 @@ app.include_router(tasks_router)
 
 
 @app.on_event("startup")
-async def on_startup():
+async def on_startup() -> None:
     try:
         await get_task_processor().initialize()
     except Exception as e:

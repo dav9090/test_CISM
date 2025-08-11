@@ -1,8 +1,10 @@
 import enum
-from sqlalchemy.orm import Mapped, mapped_column
-from sqlalchemy import Enum, Integer, String, Text, DateTime
 from datetime import datetime
+
+from sqlalchemy import DateTime, Enum, Integer, String, Text
+from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.sql import func
+
 from app.db.base import Base
 
 

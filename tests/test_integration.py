@@ -4,15 +4,16 @@ from datetime import datetime, timezone
 import pytest
 import pytest_asyncio
 from httpx import AsyncClient
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
-from app.worker import handle_message
-import app.db.session as session_module
 import app.api.v1.endpoints.tasks as tasks_module
+import app.db.session as session_module
 from app.db.base import Base
+from app.db.models.task import Status
+from app.db.models.task import Task as TaskModel
 from app.main import app
-from app.db.models.task import Task as TaskModel, Status
+from app.worker import handle_message
 
 
 class DummyProcessor:
@@ -137,7 +138,7 @@ async def test_cancel_task_and_not_found(client: AsyncClient):
     assert 400 <= resp3.status_code < 500
 
     # несуществующий ID — все эндпоинты 404
-    fake = "00000000-0000-0000-0000-000000000000"
+    fake = 99999  # используем int вместо UUID
     assert (await client.get(f"/api/v1/tasks/{fake}")).status_code == 404
     assert (await client.get(f"/api/v1/tasks/{fake}/status")).status_code == 404
     assert (await client.delete(f"/api/v1/tasks/{fake}")).status_code == 404

@@ -2,12 +2,13 @@ import asyncio
 from datetime import datetime, timezone
 
 import structlog
-from aio_pika import connect_robust, IncomingMessage, ExchangeType
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine, async_sessionmaker
+from aio_pika import ExchangeType, IncomingMessage, connect_robust
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 from app.core.config import settings
 from app.db.base import Base
-from app.db.models.task import Task as TaskModel, Status
+from app.db.models.task import Status
+from app.db.models.task import Task as TaskModel
 
 # Настраиваем structlog для JSON-логов
 structlog.configure(
@@ -19,7 +20,7 @@ structlog.configure(
 logger = structlog.get_logger()
 
 # Фабрика сессий, инициализируется в main()
-AsyncSessionLocal: async_sessionmaker[AsyncSession] = None  # type: ignore[arg-type]
+AsyncSessionLocal: async_sessionmaker[AsyncSession] | None = None
 
 
 async def handle_message(message: IncomingMessage) -> None:
